@@ -130,7 +130,8 @@ def common(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
 def cut_kmer(sequence, kmer_size):
-    pass
+    for i in range(len(sequence)-kmer_size+1):
+        yield sequence[i:i+kmer_size]
 
 def get_identity(alignment_list):
     pass
@@ -163,6 +164,8 @@ def main():
     print(next(derep))
     seq = "TGGGGAATATTGCACAATGGGCGCAAGCCTGATGCAGCCATGCCGCGTGTATGAAGAAGGCCTTCGGGTTGTAAAGTACTTTCAGCGGGGAGGAAGGTGTTGTGGTTAATAACCGCAGCAATTGACGTTACCCGCAGAAGAAGCACCGGCTAACTCCGTGCCAGCAGCCGCGGTAATACGGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGGAAAGCGCA"
     chunks = get_chunks(seq,args.chunk_size)
+    kmer = cut_kmer(seq,args.kmer_size)
+    print(next(kmer))
 
 
 if __name__ == '__main__':
