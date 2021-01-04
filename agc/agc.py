@@ -21,15 +21,15 @@ import statistics
 from collections import Counter
 # https://github.com/briney/nwalign3
 # ftp://ftp.ncbi.nih.gov/blast/matrices/
-import nwalign3 as nw
+# import nwalign3 as nw
 
-__author__ = "Your Name"
+__author__ = "Aurélien"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["Aurélien"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Aurélien"
+__email__ = "burieaurel@eisti.eu"
 __status__ = "Developpement"
 
 
@@ -55,7 +55,7 @@ def get_arguments():
     parser = argparse.ArgumentParser(description=__doc__, usage=
                                      "{0} -h"
                                      .format(sys.argv[0]))
-    parser.add_argument('-i', '-amplicon_file', dest='amplicon_file', type=isfile, required=True, 
+    parser.add_argument('-i', '-amplicon_file', dest='amplicon_file', type=isfile, required=True,
                         help="Amplicon is a compressed fasta file (.fasta.gz)")
     parser.add_argument('-s', '-minseqlen', dest='minseqlen', type=int, default = 400,
                         help="Minimum sequence length for dereplication")
@@ -69,22 +69,64 @@ def get_arguments():
                         default="OTU.fasta", help="Output file")
     return parser.parse_args()
 
-def read_fasta(amplicon_file, minseqlen):
-    pass
 
+def read_fasta(amplicon_file, minseqlen):
+    with gzip.open(amplicon_file) as file:
+        sequences = file.readlines()
+        seqs = ""
+        for sequence in sequences:
+            #print("sequence")
+            seq = sequence.replace(b"\n", b"")
+            seq = seq.decode('utf8')
+            #print(seq)
+            for character in seq:
+                if character not in "TGAC":
+                    if len(seqs)>=minseqlen:
+                        yield seqs
+                        #print(seqs)
+                    seq = ""
+                    seqs = ""
+                    break
+            seqs += seq
+        #print(seqs)
+        yield seqs
 
 def dereplication_fulllength(amplicon_file, minseqlen, mincount):
-    pass
+    dict_derep = {}
+    seq = read_fasta(amplicon_file, minseqlen)
+    for sequence in seq:
+        counter = 0
+        seq2 = read_fasta(amplicon_file, minseqlen)
+        for sequence2 in seq2:
+            if sequence2 == sequence:
+                counter += 1
+        if counter < mincount:
+            continue
+        dict_derep[sequence] = counter
+    dict_derep = sorted(dict_derep.items(), key=lambda t: t[1], reverse=True)
+    for derep in dict_derep:
+        yield [derep[0], derep[1]]
+
+
+
 
 
 def get_chunks(sequence, chunk_size):
-    pass
+    seq_length = len(sequence)
+    seq_list = []
+    treshold = int(seq_length) // int(chunk_size)
+    if treshold <4:
+        raise ValueError("Change chunk size")
+    for i in range(treshold):
+        seq = sequence[i*chunk_size:(i+1)*chunk_size]
+        seq_list.append(seq)
+    return seq_list
 
 def get_unique(ids):
     return {}.fromkeys(ids).keys()
 
 
-def common(lst1, lst2): 
+def common(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
 def cut_kmer(sequence, kmer_size):
@@ -114,6 +156,13 @@ def main():
     """
     # Get arguments
     args = get_arguments()
+    amplicon_file = args.amplicon_file
+    minseqlen = args.minseqlen
+    mincount = args.mincount
+    derep = dereplication_fulllength(amplicon_file, minseqlen, mincount)
+    print(next(derep))
+    seq = "TGGGGAATATTGCACAATGGGCGCAAGCCTGATGCAGCCATGCCGCGTGTATGAAGAAGGCCTTCGGGTTGTAAAGTACTTTCAGCGGGGAGGAAGGTGTTGTGGTTAATAACCGCAGCAATTGACGTTACCCGCAGAAGAAGCACCGGCTAACTCCGTGCCAGCAGCCGCGGTAATACGGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGGAAAGCGCA"
+    chunks = get_chunks(seq,args.chunk_size)
 
 
 if __name__ == '__main__':
