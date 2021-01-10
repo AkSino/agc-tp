@@ -264,7 +264,22 @@ def abundance_greedy_clustering(amplicon_file, minseqlen, mincount, chunk_size, 
             kmer_size : size of kmer
         Returns: A list of OTU sequences in the format: [[sequence, count]]
     """
-    pass
+    list_OTU = []
+    list_greedy_clustering = []
+    for seq_and_count in chimera_removal(amplicon_file,minseqlen,mincount,chunk_size,kmer_size):
+        list_greedy_clustering.append(seq_and_count)
+    for i in range(len(list_greedy_clustering)):
+        ignore = False
+        seq, count = list_greedy_clustering[i]
+        for j in range(i + 1, len(list_greedy_clustering)):
+            seqq, countt = list_greedy_clustering[j]
+            if seq != seqq and get_identity([seq, seqq]) > 97 and countt > count:
+                ignore = True
+                break
+        if not ignore:
+            list_OTU.append([seq,count])
+    return list_OTU
+
 
 def fill(text, width=80):
     """Split text with a line return to respect fasta format"""
