@@ -291,7 +291,16 @@ def write_OTU(OTU_list, output_file):
             otu_list: list of OTU
             output_file: name of output file
     """
-    pass
+    with open(output_file, "w") as file:
+        iter = 1
+        for seq, count in OTU_list:
+            file.write(">OTU_{} occurence:{}\n".format(iter, count))
+            file.write("{}\n".format(fill(seq)))
+            iter += 1
+
+
+
+
 #==============================================================
 # Main program
 #==============================================================
@@ -304,12 +313,11 @@ def main():
     amplicon_file = args.amplicon_file
     minseqlen = args.minseqlen
     mincount = args.mincount
-    derep = dereplication_fulllength(amplicon_file, minseqlen, mincount)
-    print(next(derep))
-    seq = "TGGGGAATATTGCACAATGGGCGCAAGCCTGATGCAGCCATGCCGCGTGTATGAAGAAGGCCTTCGGGTTGTAAAGTACTTTCAGCGGGGAGGAAGGTGTTGTGGTTAATAACCGCAGCAATTGACGTTACCCGCAGAAGAAGCACCGGCTAACTCCGTGCCAGCAGCCGCGGTAATACGGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGGAAAGCGCA"
-    chunks = get_chunks(seq,args.chunk_size)
-    kmer = cut_kmer(seq,args.kmer_size)
-    print(next(kmer))
+    chunk_size = args.chunk_size
+    kmer_size = args.kmer_size
+    output_file = args.output_file
+    OTU_list = abundance_greedy_clustering(amplicon_file, minseqlen, mincount, chunk_size, kmer_size)
+    write_OTU(OTU_list, output_file)
 
 
 if __name__ == '__main__':
